@@ -1,7 +1,6 @@
-
 <div class="logo">
-    <a href="javascript:" class="simple-text">
-    Your Logo
+    <a href="#" class="simple-text">
+        <img src="assets/img/JLogo.png" alt="logo.png" width="50%">
     </a>
 </div>
 <ul class="nav">
