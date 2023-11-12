@@ -1,3 +1,24 @@
+<?php
+    require('config/config.php');
+    require('config/db.php');
+    global $conn;
+
+    // Create Query
+    $query = "SELECT transaction.datelog, transaction.action, transaction.remarks, transaction.documentcode, office.name as office_name, CONCAT(employee.lastname, ', ', employee.firstname) as employee_name FROM employee, office, transaction WHERE transaction.employee_id = employee.id and transaction.office_id = office.id";
+
+    // Get the result
+    $result = mysqli_query($conn, $query);
+
+    // Fetch the table
+    $transactions = mysqli_fetch_all($result, MYSQLI_ASSOC);
+
+    // Free result
+    mysqli_free_result($result);
+
+    // Close the connection
+    mysqli_close($conn);
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -19,26 +40,6 @@
 </head>
 
 <body>
-    <?php
-        require('config/config.php');
-        require('config/db.php');
-        global $conn;
-
-        // Create Query
-        $query = "SELECT transaction.datelog, transaction.action, transaction.remarks, transaction.documentcode, office.name as office_name, CONCAT(employee.lastname, ', ', employee.firstname) as employee_name FROM employee, office, transaction WHERE transaction.employee_id = employee.id and transaction.office_id = office.id";
-
-        // Get the result
-        $result = mysqli_query($conn, $query);
-
-        // Fetch the table
-        $transactions = mysqli_fetch_all($result, MYSQLI_ASSOC);
-
-        // Free result 
-        mysqli_free_result($result);
-
-        // Close the connection
-        mysqli_close($conn);
-    ?>
     <div class="wrapper">
         <div class="sidebar" data-image="assets/img/sidebar-5.jpg">
             <!--
@@ -52,6 +53,7 @@
         </div>
         <div class="main-panel">
         <?php include('includes/navbar.php'); ?>
+
             <div class="content">
                 <div class="container-fluid">
                     <div class="section">
@@ -59,9 +61,16 @@
                     <div class="row">
                     <div class="col-md-12">
                             <div class="card strpied-tabled-with-hover">
-                                <div class="card-header ">
-                                    <h4 class="card-title">Transaction Table</h4>
-                                    <p class="card-category">Here is a subtitle for this table</p>
+                                <br />
+                                <div>
+                                    <div class="col-md-12">
+                                        <a href="transaction_add.php">
+                                            <button type="submit" class="btn btn-info btn-fill pull-right">Add New Transaction</button>
+                                        </a>
+                                    </div>
+                                    <div class="card-header ">
+                                        <h4 class="card-title">Transaction Table</h4>
+                                    </div>
                                 </div>
                                 <div class="card-body table-full-width table-responsive">
                                     <table class="table table-hover table-striped">
@@ -69,7 +78,7 @@
                                             <th>Date Log</th>
                                             <th>Action</th>
                                             <th>Remarks</th>
-                                            <th>Document COde</th>
+                                            <th>Document Code</th>
                                             <th>Office Name</th>
                                             <th>Employee Name</th>
                                         </thead>

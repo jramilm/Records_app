@@ -68,7 +68,6 @@
                                     </div>
                                     <div class="card-header ">
                                         <h4 class="card-title">Office Table</h4>
-                                        <p class="card-category">Here is a subtitle for this table</p>
                                     </div>
                                 </div>
                                 <div class="card-body table-full-width table-responsive">
