@@ -3,8 +3,8 @@
 
 <head>
     <meta charset="utf-8" />
-    <link rel="apple-touch-icon" sizes="76x76" href="../assets/img/apple-icon.png">
-    <link rel="icon" type="image/png" href="../assets/img/favicon.ico">
+    <link rel="apple-touch-icon" sizes="76x76" href="assets/img/apple-icon.png">
+    <link rel="icon" type="image/png" href="assets/img/favicon.ico">
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
     <title>Light Bootstrap Dashboard - Free Bootstrap 4 Admin Dashboard by Creative Tim</title>
     <meta content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0, shrink-to-fit=no' name='viewport' />
@@ -22,6 +22,7 @@
     <?php
         require('config/config.php');
         require('config/db.php');
+        global $conn;
 
         // Create Query
         $query = "SELECT transaction.datelog, transaction.action, transaction.remarks, transaction.documentcode, office.name as office_name, CONCAT(employee.lastname, ', ', employee.firstname) as employee_name FROM employee, office, transaction WHERE transaction.employee_id = employee.id and transaction.office_id = office.id";
@@ -39,7 +40,7 @@
         mysqli_close($conn);
     ?>
     <div class="wrapper">
-        <div class="sidebar" data-image="../assets/img/sidebar-5.jpg">
+        <div class="sidebar" data-image="assets/img/sidebar-5.jpg">
             <!--
         Tip 1: You can change the color of the sidebar using: data-color="purple | blue | green | orange | red"
 
