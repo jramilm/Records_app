@@ -1,27 +1,26 @@
 <?php
     require('config/config.php');
     require('config/db.php');
+    global $conn;
 
     // get value
     $id = $_GET['id'];
 
     // Create query
-    $query = "SELECT * FROM office where id=" . $id;
+    $query = "SELECT * FROM employee where id=" . $id;
 
     // get result
     $result = mysqli_query($conn, $query);
+
     if ($result) {
         $rowCount = mysqli_num_rows($result);
         if ($rowCount == 1){
             // fetch data
-            $office = mysqli_fetch_array($result);
-            $name = $office['name'];
-            $contactnum = $office['contactnum'];
-            $email = $office['email'];
-            $address = $office['address'];
-            $city = $office['city'];
-            $country = $office['country'];
-            $postal = $office['postal'];
+            $employee = mysqli_fetch_array($result);
+            $lastname = $employee['lastname'];
+            $firstname = $employee['firstname'];
+            $address = $employee['address'];
+            $office_id = $employee['office_id'];
         }
     }
     // free result
@@ -30,24 +29,20 @@
     // Check if submitted
     if(isset($_POST['submit'])){
         // Get form data
-        $name = mysqli_real_escape_string($conn, $_POST['name']);
-        $contactnum = mysqli_real_escape_string($conn, $_POST['contactnum']);
-        $email = mysqli_real_escape_string($conn, $_POST['email']);
+        $lastname = mysqli_real_escape_string($conn, $_POST['lastname']);
+        $firstname = mysqli_real_escape_string($conn, $_POST['firstname']);
+        $office_id = mysqli_real_escape_string($conn, $_POST['office_id']);
         $address = mysqli_real_escape_string($conn, $_POST['address']);
-        $city = mysqli_real_escape_string($conn, $_POST['city']);
-        $country = mysqli_real_escape_string($conn, $_POST['country']);
-        $postal = mysqli_real_escape_string($conn, $_POST['postal']);
-
 
         // Create insert query
-        $query = "UPDATE office SET name='$name', contactnum='$contactnum', email='$email', address='$address', city='$city', country='$country', postal='$postal'
-                          WHERE id=" . $id;
+        $query = "UPDATE employee SET lastname='$lastname', firstname='$firstname', office_id='$office_id', address='$address'
+                  WHERE id=" . $id;
 
         // Query execute
         if(!mysqli_query($conn, $query)){
             echo "ERROR: " . mysqli_error($conn);
         }
-        header("Location: office.php");
+        header("Location: employee.php");
         mysqli_close($conn);
     }
 ?>
@@ -71,21 +66,17 @@
     <!-- CSS Just for demo purpose, don't include it in your project -->
     <link href="assets/css/demo.css" rel="stylesheet" />
 </head>
+
 <body>
 <div class="wrapper">
     <div class="sidebar" data-image="assets/img/sidebar-5.jpg">
-        <!--
-    Tip 1: You can change the color of the sidebar using: data-color="purple | blue | green | orange | red"
-
-    Tip 2: you can also add an image using data-image tag
--->
         <div class="sidebar-wrapper">
             <?php include('includes/sidebar.php'); ?>
 
         </div>
     </div>
     <div class="main-panel">
-    <?php include('includes/navbar.php'); ?>
+        <?php include('includes/navbar.php'); ?>
 
         <div class="content">
             <div class="container-fluid">
@@ -95,55 +86,43 @@
                     <div class="col-md-12">
                         <div class="card">
                             <div class="card-header">
-                                <h4 class="card-title">Edit Office</h4>
+                                <h4 class="card-title">Edit Employee</h4>
                             </div>
                             <div class="card-body">
-                                <form method="post" action="<?php $_SERVER['PHP_SELF'];?>">
+                                <form method="post" action="<?php $_SERVER['PHP_SELF']; ?>">
                                     <div class="row">
                                         <div class="col-md-5 pr-1">
                                             <div class="form-group">
-                                                <label>Office Name</label>
-                                                <input type="text" class="form-control" name="name" value="<?php echo $name;?>">
+                                                <label>Last Name</label>
+                                                <input type="text" class="form-control" name="lastname" value="<?php echo $lastname; ?>">
                                             </div>
                                         </div>
                                         <div class="col-md-3 px-1">
                                             <div class="form-group">
-                                                <label>Contact Number</label>
-                                                <input type="text" class="form-control" name="contactnum" value="<?php echo $contactnum;?>">
+                                                <label>First Name</label>
+                                                <input type="text" class="form-control" name="firstname" value="<?php echo $firstname; ?>">
                                             </div>
                                         </div>
                                         <div class="col-md-4 pl-1">
                                             <div class="form-group">
-                                                <label for="exampleInputEmail1">Email Address</label>
-                                                <input type="email" class="form-control" name="email" value="<?php echo $email;?>">
+                                                <label for="exampleInputEmail1">Office</label>
+                                                <select class="form-control" name="office_id">
+                                                    <?php
+                                                    $categories = mysqli_query($conn, 'SELECT * FROM office');
+                                                    while($c = mysqli_fetch_assoc($categories)) {
+                                                        ?>
+                                                        <option value="<?php echo $c['id'];?>"><?php echo $c['name']?></option>
+                                                    <?php }
+                                                    mysqli_close($conn); ?>
+                                                </select>
                                             </div>
                                         </div>
                                     </div>
                                     <div class="row">
                                         <div class="col-md-12">
                                             <div class="form-group">
-                                                <label>Address / Building</label>
-                                                <input type="text" class="form-control" name="address" value="<?php echo $address;?>">
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="row">
-                                        <div class="col-md-4 pr-1">
-                                            <div class="form-group">
-                                                <label>City</label>
-                                                <input type="text" class="form-control" name="city" value="<?php echo $city;?>">
-                                            </div>
-                                        </div>
-                                        <div class="col-md-4 pr-1">
-                                            <div class="form-group">
-                                                <label>Country</label>
-                                                <input type="text" class="form-control" name="country" value="<?php echo $country;?>">
-                                            </div>
-                                        </div>
-                                        <div class="col-md-4 pr-1">
-                                            <div class="form-group">
-                                                <label>Postal Code</label>
-                                                <input type="text" class="form-control" name="postal" value="<?php echo $postal;?>">
+                                                <label>Address</label>
+                                                <input type="text" class="form-control" name="address" value="<?php echo $address; ?>">
                                             </div>
                                         </div>
                                     </div>

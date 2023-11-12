@@ -1,3 +1,24 @@
+<?php
+    require('config/config.php');
+    require('config/db.php');
+    global $conn;
+
+    // Create Query
+    $query = "SELECT * FROM office ORDER BY name";
+
+    // Get the result
+    $result = mysqli_query($conn, $query);
+
+    // Fetch the table
+    $offices = mysqli_fetch_all($result, MYSQLI_ASSOC);
+
+    // Free result
+    mysqli_free_result($result);
+
+    // Close the connection
+    mysqli_close($conn);
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -13,32 +34,13 @@
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/latest/css/font-awesome.min.css" />
     <!-- CSS Files -->
     <link href="assets/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="assets/css/styles.css" rel="stylesheet" />
     <link href="assets/css/light-bootstrap-dashboard.css?v=2.0.0 " rel="stylesheet" />
     <!-- CSS Just for demo purpose, don't include it in your project -->
     <link href="assets/css/demo.css" rel="stylesheet" />
 </head>
 
 <body>
-    <?php
-        require('config/config.php');
-        require('config/db.php');
-        global $conn;
-
-        // Create Query
-        $query = "SELECT * FROM office ORDER BY name";
-
-        // Get the result
-        $result = mysqli_query($conn, $query);
-
-        // Fetch the table
-        $offices = mysqli_fetch_all($result, MYSQLI_ASSOC);
-
-        // Free result 
-        mysqli_free_result($result);
-
-        // Close the connection
-        mysqli_close($conn);
-    ?>
     <div class="wrapper">
         <div class="sidebar" data-image="assets/img/sidebar-5.jpg">
             <!--
@@ -72,7 +74,7 @@
                                 </div>
                                 <div class="card-body table-full-width table-responsive">
                                     <table class="table table-hover table-striped">
-                                        <thead>
+                                        <thead class="thead-custom">
                                             <th>Name</th>
                                             <th>Contact Number</th>
                                             <th>Email</th>
