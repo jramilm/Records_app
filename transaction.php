@@ -2,21 +2,57 @@
     require('config/config.php');
     require('config/db.php');
     global $conn;
+	
+	$recordsPerPage = 10;
 
-    // Create Query
-    $query = "SELECT transaction.datelog, transaction.action, transaction.remarks, transaction.documentcode, office.name as office_name, CONCAT(employee.lastname, ', ', employee.firstname) as employee_name FROM employee, office, transaction WHERE transaction.employee_id = employee.id and transaction.office_id = office.id";
+	$page = isset($_GET['page']) && is_numeric($_GET['page']) ? intval($_GET['page']) : 1;
+	
+	$search = isset($_GET['search']) ? mysqli_real_escape_string($conn, $_GET['search']) : '';
 
-    // Get the result
-    $result = mysqli_query($conn, $query);
+	$offset = ($page - 1) * $recordsPerPage;
+	
+    // Create Query 
+	$query = "SELECT transaction.datelog, transaction.action, transaction.remarks, transaction.documentcode, office.name as office_name, CONCAT(employee.lastname, ', ', employee.firstname) as employee_name 
+			  FROM transaction
+			  JOIN employee ON transaction.employee_id = employee.id
+			  JOIN office ON transaction.office_id = office.id";
+			  
+	// Check if search term is provided
+	if (!empty($search)) {
+		$query .= " WHERE (CONCAT(employee.lastname, ' ', employee.firstname) LIKE ? OR CONCAT(employee.firstname, ' ', employee.lastname) LIKE ? OR office.name LIKE ? OR transaction.documentcode LIKE ?)";
+	} 
+	
+	$query .= " LIMIT ? OFFSET ?";
 
-    // Fetch the table
-    $transactions = mysqli_fetch_all($result, MYSQLI_ASSOC);
+	// Prepare the statement
+	$stmt = $conn ->prepare($query);
 
-    // Free result
-    mysqli_free_result($result);
+	// Bind parameters
+	if (!empty($search)) {
+		$searchParam = "%$search%";
+		$stmt ->bind_param("ssssii", $searchParam, $searchParam, $searchParam, $searchParam, $recordsPerPage, $offset);
+	} else {
+		$stmt ->bind_param("ii", $recordsPerPage, $offset);
+	}
 
-    // Close the connection
-    mysqli_close($conn);
+	// Execute the statement
+	$stmt ->execute();
+
+	// Get the result
+	$result = mysqli_stmt_get_result($stmt);
+	if (!$result) {
+		echo "<p> Query couldn't be executed </p>";
+		echo mysqli_error($conn);
+	}
+
+	// Fetch the table
+	$transactions = mysqli_fetch_all($result, MYSQLI_ASSOC);
+
+	// Free result
+	mysqli_free_result($result);
+
+	// Close the statement
+	mysqli_stmt_close($stmt);
 ?>
 
 <!DOCTYPE html>
@@ -73,28 +109,70 @@
                                     </div>
                                 </div>
                                 <div class="card-body table-full-width table-responsive">
+								
+								<?php if (empty($transactions)) : // Message if there are empty search results ?>
+                                        <p class="text-center">No results found</p>
+                                    <?php else : ?>
+									
                                     <table class="table table-hover table-striped">
                                         <thead>
-                                            <th>Date Log</th>
+                                            <th>Document Code</th>
+                                            <th>Employee Name</th>
+                                            <th>Office Name</th>
                                             <th>Action</th>
                                             <th>Remarks</th>
-                                            <th>Document Code</th>
-                                            <th>Office Name</th>
-                                            <th>Employee Name</th>
+                                            <th>Date Log</th>
                                         </thead>
                                         <tbody>
                                             <?php foreach($transactions as $transaction): ?>
                                             <tr>
-                                                <td><?php echo $transaction['datelog']; ?></td>
+                                                <td><?php echo $transaction['documentcode']; ?></td>
+                                                <td><?php echo $transaction['employee_name']; ?></td>
+                                                <td><?php echo $transaction['office_name']; ?></td>
                                                 <td><?php echo $transaction['action']; ?></td>
                                                 <td><?php echo $transaction['remarks']; ?></td>
-                                                <td><?php echo $transaction['documentcode']; ?></td>
-                                                <td><?php echo $transaction['office_name']; ?></td>
-                                                <td><?php echo $transaction['employee_name']; ?></td>
+                                                <td><?php echo $transaction['datelog']; ?></td>
                                             </tr>
                                             <?php endforeach ?>
                                         </tbody>
                                     </table>
+									
+									<!-- Pagination links -->
+									<div class="pagination justify-content-center">
+										<?php
+										// Calculate the total number of pages
+										$query = "SELECT COUNT(*) as total 
+												  FROM transaction
+												  JOIN employee ON transaction.employee_id = employee.id
+												  JOIN office ON transaction.office_id = office.id";
+										
+										if (!empty($search)) {
+											$query .= " WHERE (CONCAT(employee.lastname, ' ', employee.firstname) LIKE '%$search%' OR CONCAT(employee.firstname, ' ', employee.lastname) LIKE '%$search%' OR office.name LIKE '%$search%' OR transaction.documentcode LIKE '%$search%')";
+										}
+										
+										$result = mysqli_query($conn, $query);
+										if (!$result) {
+											echo "<p> Query [$query] couldn't be executed </p>";
+											echo mysqli_error($conn);
+										}
+										
+										$row = mysqli_fetch_assoc($result);
+										$totalPages = ceil($row['total'] / $recordsPerPage);
+
+										// Display pagination links
+										for ($i = 1; $i <= $totalPages; $i++) {
+											echo '<a href="?page=' . $i . '" class="page-link">' . $i . '</a>';
+										}
+										
+										// Close the connection
+										mysqli_close($conn);
+										?>										
+									</div>
+								<?php endif; ?>
+									
+                                </div>
+								<div class="card-footer">
+                                    <a href="?page=1" class="btn btn-success btn-fill">Refresh</a>
                                 </div>
                             </div>
                         </div>

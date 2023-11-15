@@ -28,13 +28,16 @@
                                     <a class="dropdown-item" href="#">Another notification</a>
                                 </ul>
                             </li>
-                            <li class="nav-item">
-                                <a href="#" class="nav-link">
-                                    <i class="nc-icon nc-zoom-split"></i>
-                                    <span class="d-lg-block">&nbsp;Search</span>
-                                </a>
-                            </li>
                         </ul>
+						<!-- Search form -->
+						<form action="#" method="get" class="form-inline my-2 my-lg-0">
+							<div class="input-group">
+								<input class="form-control mr-sm-2" type="text" name="search" placeholder="Search" aria-label="Search">
+								<span class="input-group-btn">
+									<button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>
+								</span>
+							</div>
+						</form>
                         <ul class="navbar-nav ml-auto">
                             <li class="nav-item">
                                 <a class="nav-link" href="#pablo">

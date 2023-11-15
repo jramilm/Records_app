@@ -3,20 +3,60 @@
     require('config/db.php');
     global $conn;
 
-    // Create Query
-    $query = "SELECT employee.id, employee.lastname, employee.firstname, employee.address, office.name as office_name FROM employee, office WHERE employee.office_id = office.id";
+    // Define the number of records per page
+	$recordsPerPage = 10;
 
-    // Get the result
-    $result = mysqli_query($conn, $query);
+	// Get the current page number from the URL, default to page 1
+	$page = isset($_GET['page']) && is_numeric($_GET['page']) ? intval($_GET['page']) : 1;
+	
+	// Get the search query from the URL
+	$search = isset($_GET['search']) ? mysqli_real_escape_string($conn, $_GET['search']) : '';
 
-    // Fetch the table
-    $employees = mysqli_fetch_all($result, MYSQLI_ASSOC);
+	// Calculate the offset for the SQL query
+	$offset = ($page - 1) * $recordsPerPage;
 
-    // Free result
-    mysqli_free_result($result);
+	// Create Query 
+	$query = "SELECT employee.id, employee.lastname, employee.firstname, employee.address, office.name as office_name
+			  FROM employee
+			  JOIN office ON employee.office_id = office.id";
 
-    // Close the connection
-    mysqli_close($conn);
+	// Check if search term is provided
+	if (!empty($search)) {
+		$query .= " WHERE (CONCAT(employee.lastname, ' ', employee.firstname) LIKE ? OR CONCAT(employee.firstname, ' ', employee.lastname) LIKE ? OR employee.address LIKE ? OR office.name LIKE ?)";
+	}
+
+	$query .= " LIMIT ? OFFSET ?";
+	
+	// Prepare the statement
+	$stmt = $conn ->prepare($query);
+
+	// Bind parameters
+	if (!empty($search)) {
+		$searchParam = "%$search%";
+		$stmt ->bind_param("ssssii", $searchParam, $searchParam, $searchParam, $searchParam, $recordsPerPage, $offset);
+	} else {
+		$stmt ->bind_param("ii", $recordsPerPage, $offset);
+	}
+
+	// Execute the statement
+	$stmt ->execute();
+
+	// Get the result
+	$result = mysqli_stmt_get_result($stmt);
+	
+	if (!$result) {
+		echo "<p> Query couldn't be executed </p>";
+		echo mysqli_error($conn);
+	}
+
+	// Fetch the table
+	$employees = mysqli_fetch_all($result, MYSQLI_ASSOC);
+
+	// Free result
+	mysqli_free_result($result);
+
+	// Close the statement
+	mysqli_stmt_close($stmt);
 ?>
 
 <!DOCTYPE html>
@@ -72,6 +112,11 @@
                                     </div>
                                 </div>
                                 <div class="card-body table-full-width table-responsive">
+								
+								<?php if (empty($employees)) : // Message if there are empty search results ?>
+                                        <p class="text-center">No results found</p>
+                                    <?php else : ?>
+									
                                     <table class="table table-hover table-striped">
                                         <thead>
                                             <th>Last Name</th>
@@ -95,6 +140,39 @@
                                             <?php endforeach ?>
                                         </tbody>
                                     </table>
+									
+									<!-- Pagination links -->
+									<div class="pagination justify-content-center">
+										<?php
+										// Calculate the total number of pages
+										$query = "SELECT COUNT(*) as total FROM employee JOIN office ON employee.office_id = office.id";
+										if (!empty($search)) {
+											$query .= " WHERE (CONCAT(employee.lastname, ' ', employee.firstname) LIKE '%$search%' OR CONCAT(employee.firstname, ' ', employee.lastname) LIKE '%$search%' OR employee.address LIKE '%$search%' OR office.name LIKE '%$search%')";
+										}
+										
+										$result = mysqli_query($conn, $query);
+										if (!$result) {
+											echo "<p> Query [$query] couldn't be executed </p>";
+											echo mysqli_error($conn);
+										}
+										
+										$row = mysqli_fetch_assoc($result);
+										$totalPages = ceil($row['total'] / $recordsPerPage);
+
+										// Display pagination links
+										for ($i = 1; $i <= $totalPages; $i++) {
+											echo '<a href="?page=' . $i . '&search=' . urlencode($search) . '" class="page-link">' . $i . '</a>';
+										}
+										
+										// Close the connection
+										mysqli_close($conn);
+										?>	
+									</div>
+								<?php endif; ?>
+									
+                                </div>
+								<div class="card-footer">
+                                    <a href="?page=1" class="btn btn-success btn-fill">Refresh</a>
                                 </div>
                             </div>
                         </div>

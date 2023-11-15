@@ -2,21 +2,50 @@
     require('config/config.php');
     require('config/db.php');
     global $conn;
+	
+	$recordsPerPage = 10;
 
+	$page = isset($_GET['page']) && is_numeric($_GET['page']) ? intval($_GET['page']) : 1;
+	
+	$search = isset($_GET['search']) ? mysqli_real_escape_string($conn, $_GET['search']) : '';
+
+	$offset = ($page - 1) * $recordsPerPage;
+	
     // Create Query
-    $query = "SELECT * FROM office ORDER BY name";
+    $query = "SELECT * FROM office";
+	
+	if (!empty($search)) {
+		$query .= " WHERE office.name LIKE ?";
+	}
 
-    // Get the result
-    $result = mysqli_query($conn, $query);
+	$query .= " ORDER BY name LIMIT ? OFFSET ?";
+
+    // Prepare the statement
+	$stmt = $conn ->prepare($query);
+
+	// Bind parameters
+	if (!empty($search)) {
+		$searchParam = "%$search%";
+		$stmt ->bind_param("sii", $searchParam, $recordsPerPage, $offset);
+	} else {
+		$stmt ->bind_param("ii", $recordsPerPage, $offset);
+	}
+
+	// Execute the statement
+	$stmt ->execute();
+
+	// Get the result
+	$result = mysqli_stmt_get_result($stmt);
+	if (!$result) {
+		echo "<p> Query couldn't be executed </p>";
+		echo mysqli_error($conn);
+	}
 
     // Fetch the table
     $offices = mysqli_fetch_all($result, MYSQLI_ASSOC);
 
     // Free result
     mysqli_free_result($result);
-
-    // Close the connection
-    mysqli_close($conn);
 ?>
 
 <!DOCTYPE html>
@@ -73,6 +102,11 @@
                                     </div>
                                 </div>
                                 <div class="card-body table-full-width table-responsive">
+								
+								<?php if (empty($offices)) : // Message if there are empty search results ?>
+                                        <p class="text-center">No results found</p>
+                                    <?php else : ?>
+									
                                     <table class="table table-hover table-striped">
                                         <thead class="thead-custom">
                                             <th>Name</th>
@@ -102,6 +136,40 @@
                                             <?php endforeach ?>
                                         </tbody>
                                     </table>
+									
+									<!-- Pagination links -->
+									<div class="pagination justify-content-center">
+										<?php
+										// Calculate the total number of pages
+										$query = "SELECT COUNT(*) as total FROM office";
+										
+										if (!empty($search)) {
+											$query .= " WHERE office.name LIKE '%$search%'";
+										}
+										
+										$result = mysqli_query($conn, $query);
+										if (!$result) {
+											echo "<p> Query [$query] couldn't be executed </p>";
+											echo mysqli_error($conn);
+										}
+										
+										$row = mysqli_fetch_assoc($result);
+										$totalPages = ceil($row['total'] / $recordsPerPage);
+
+										// Display pagination links
+										for ($i = 1; $i <= $totalPages; $i++) {
+											echo '<a href="?page=' . $i . '" class="page-link">' . $i . '</a>';
+										}
+										
+										// Close the connection
+										mysqli_close($conn);
+										?>										
+									</div>
+								<?php endif; ?>
+									
+                                </div>
+								<div class="card-footer">
+                                    <a href="?page=1" class="btn btn-success btn-fill">Refresh</a>
                                 </div>
                             </div>
                         </div>
